@@ -15,16 +15,17 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 """
 
-import numpy
-from scipy.misc import logsumexp
-import os
 import codecs
-import re
-import datetime
 import ctypes
-import multiprocessing
+import datetime
 from multiprocessing import Process, Queue
+import multiprocessing
+import numpy
+import os
+import re
+from scipy.misc import logsumexp
 import sys
+
 
 _gradient = None  #  global variable used to store the gradient calculated in Liklihood function.
 
@@ -45,6 +46,9 @@ def validTemplateLine(strt):
    return ifvalid
 
 def readData(dataFile):
+    """
+    read the train data from data file
+    """
     texts = []
     labels = []
     text = []
@@ -97,6 +101,9 @@ def readData(dataFile):
     return texts,seqlens,oys,seqnum,K,obydic,y2label
    
 def readTemplate(tmpFile):
+    """
+    read the template from tmpFile
+    """
     tlist=[]  # list of list(each template line)  
     file = codecs.open(tmpFile, 'r')  #  default encoding.
     #repat=r'\[\d+,\d+\]'
@@ -1006,16 +1013,16 @@ def train(datafile,tpltfile,modelfile,mp=1,regtype=2,sigma=1.0,fd=1.0):
     if not os.path.isfile(tpltfile):
         print "Can't find the template file!"
         return -1
-    tplist=readTemplate(tpltfile)    
+    tplist=readTemplate(tpltfile)    #read the template data , format by crf++
     #print tplist
     if not os.path.isfile(datafile):
         print "Data file doesn't exist!"
         return -1
-    texts,seqlens,oys,seqnum,K,obydic,y2label=readData(datafile)
+    texts,seqlens,oys,seqnum,K,obydic,y2label=readData(datafile) #read train data
     #print seqlens 
     
-    uobxs,bobxs,ufnum,bfnum=processFeatures(tplist,texts,seqnum,K, fd=fd)
-    fnum=ufnum+bfnum
+    uobxs,bobxs,ufnum,bfnum=processFeatures(tplist,texts,seqnum,K, fd=fd) #编辑训练数据特征模板
+    fnum=ufnum+bfnum #总特征数目
     print "Linear CRF in Python.. ver 0.1 "
     print "B features:",bfnum,"U features:",ufnum, "total num:",fnum
     print "training sequence number:",seqnum
@@ -1048,6 +1055,7 @@ def train(datafile,tpltfile,modelfile,mp=1,regtype=2,sigma=1.0,fd=1.0):
     #return
     
     from scipy import optimize
+    #theta特征训练参数
     if sys.platform=="win32" and mp==1:  # using shared memory
         theta = multiprocessing.Array(ctypes.c_double, ufnum+bfnum)
         print "allocate theta OK. elapsed time:", time.time() - start_time, "seconds. \n "
@@ -1056,6 +1064,7 @@ def train(datafile,tpltfile,modelfile,mp=1,regtype=2,sigma=1.0,fd=1.0):
     else:
         theta=random_param(ufnum,bfnum)
     
+    #likeli作为目标函数,#likelihood_deriv作为目标函数一阶导数
     if mp==1:  # using multi processing
         likeli = lambda x:-likelihood_mp_sa(seqlens,fss,uonarr,uonseqsta,uonlocsta,uonlocend,
                       bonarr,bonseqsta,bonlocsta,bonlocend,x,seqnum,K,ufnum,bfnum,regtype,sigma)
@@ -1063,12 +1072,16 @@ def train(datafile,tpltfile,modelfile,mp=1,regtype=2,sigma=1.0,fd=1.0):
         likeli = lambda x:-likelihood_sa(seqlens,fss,uonarr,uonseqsta,uonlocsta,uonlocend,
                       bonarr,bonseqsta,bonlocsta,bonlocend,x,seqnum,K,ufnum,bfnum,regtype,sigma)
     likelihood_deriv = lambda x:-gradient_likelihood(x)
+    
+    #使用lbfgs算法求解最优化参数
     theta,fobj,dtemp = optimize.fmin_l_bfgs_b(likeli,theta, 
             fprime=likelihood_deriv , disp=1, factr=1e12)
 
     with open("ubobx", 'rb') as f:
         uobxs,bobxs = pickle.load(f)
-    saveModel(bfnum,ufnum,tplist,obydic,uobxs,bobxs,theta,modelfile)
+
+    #存储模型系数,使用python类的方式存储
+    saveModel(bfnum,ufnum,tplist,obydic,uobxs,bobxs,theta,modelfile) 
     print "Training finished in ", time.time() - start_time, "seconds. \n "
 
 def train_simple(datafile,tpltfile,modelfile,mp=1,regtype=2,sigma=1.0):

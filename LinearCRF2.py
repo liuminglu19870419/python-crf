@@ -30,9 +30,15 @@ import sys
 _gradient = None  #  global variable used to store the gradient calculated in Liklihood function.
 
 def logdotexp_vec_mat(loga,logM):
-        return logsumexp(loga+logM,axis=1)
+    """
+    将loga的每一元素同logM每一行中的对应元素相加
+    然后对每一行的元素计算指数和取对数
+    """
+    return logsumexp(loga+logM,axis=1)
         
 def logdotexp_mat_vec(logM,logb):
+    """
+     """
     return logsumexp(logM+logb[:,numpy.newaxis],axis=0)
 
 def validTemplateLine(strt):
@@ -148,6 +154,9 @@ def expandOBX(texts,seqid,locid,tp):  # expend the observation at locid for sequ
 
     
 def processFeatures(tplist,texts,seqnum,K,fd=1):
+    """
+    计算feature个数,删除出现次数较少的feature,并生成feature的排序
+    """
     uobxs =  dict(); bobxs=dict() ; 
     '''add feature reduction here'''
     for ti,tp in enumerate(tplist):  # for each template line
@@ -185,7 +194,9 @@ def processFeatures(tplist,texts,seqnum,K,fd=1):
 
 def calObservexOn(tplist,texts,uobxs,bobxs,seqnum):
     '''speed up the feature calculation
-      calculate the on feature functions ''' 
+      calculate the on feature functions
+      验证每一个训练数据符合那些feature
+    ''' 
     uon=[]; bon=[]
     for sid in range(seqnum):  # for each traning sequence.
         sequon=[];seqbon=[]
@@ -273,6 +284,9 @@ def calObservexOnLoc(uon,bon,seqnum,mp):
     return uonarr,uonseqsta,uonlocsta,uonlocend, bonarr,bonseqsta,bonlocsta,bonlocend
 
 def calFSS(texts,oys,uon,bon,ufnum,bfnum,seqnum,K,y0):
+    """
+    计算每个feature出现的频率, 特征出现的顺序从B到U
+    """
     fss=numpy.zeros((ufnum+bfnum))
     fssb=fss[0:bfnum]
     fssu=fss[bfnum:]
@@ -1043,6 +1057,7 @@ def train(datafile,tpltfile,modelfile,mp=1,regtype=2,sigma=1.0,fd=1.0):
     del oys
 
     print "start to translate ON Feature list to Array.  elapsed time:", time.time() - start_time, "seconds. \n "
+    # 计算输入数据满足的feature
     uonarr,uonseqsta,uonlocsta,uonlocend,bonarr,bonseqsta,bonlocsta,bonlocend = calObservexOnLoc(uon,bon,seqnum,mp)
     #print  "ubon size:", sys.getsizeof(uon)
     #print  "uobxs size:", sys.getsizeof(uobxs)

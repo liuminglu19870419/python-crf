@@ -6,24 +6,36 @@ Created on 2016年3月30日
 '''
 import numpy
 from scipy import misc
+import scipy
 
 if __name__ == '__main__':
-    a = numpy. array([1, 2])
-    b = numpy.array([[3, 4], [6, 5]])
-    k = a + b
-    print k
-    kT = k.transpose()
-    print k
-    print k[0]
-    print k[1]
-    x = numpy.sum(numpy.exp(k[0]))
-    print x
-    y = numpy.sum(numpy.exp(k[1]))
-    print y
-    print numpy.log(x)
-    print numpy.log(y)
-    print misc.logsumexp(k, axis=0)
-    print misc.logsumexp(kT, axis=1)
-    print numpy.newaxis
-    print k[:, numpy.newaxis]
-    print k[:, numpy.newaxis]
+    a = numpy.array([[0, 1, 2], [3, 4, 5]], float)
+    print a
+    print type(a)
+#     print a[0, :]
+#     print a[:, 0]
+#     print a.transpose()
+#     print a.shape 
+#     print a.size
+#     print a.ndim
+    a = a.reshape(3, 2)
+    print a
+    o = numpy.eye(3, 3, 1)
+    print o
+    
+    print numpy.dot(a, a.transpose())
+    print numpy.random.random((3, 3))
+    print numpy.sum(a)
+    print numpy.sum(a, axis=0)
+    print numpy.sum(a, axis=1)
+    print a[0:3, 1]
+    print a[:, numpy.newaxis, :]
+    for e in a.flat:
+        print e,
+    print 
+    b = a[:, 0]
+    b += 1
+    print a
+    b = a[:, 0].copy()
+    b += 1
+    print a
